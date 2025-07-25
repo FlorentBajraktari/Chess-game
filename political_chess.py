@@ -4,7 +4,7 @@ import os
 import chess 
 import random
 
-# Inicializimi i Pygame
+
 pygame.init()
 
 WIDTH, HEIGHT = 640, 640
@@ -136,8 +136,6 @@ def show_end_screen(win, board):
     pygame.display.update()
     pygame.time.wait(4000)
 
-# ...existing code...
-
 def main():
     board = chess.Board()
     run = True
@@ -161,7 +159,9 @@ def main():
                 piece = board.piece_at(square)
 
                 if selected:
-                    # If clicked on another of your own pieces, change selection
+                    if (row, col) == selected:
+                        selected = None
+                        possible_moves = []
                     if piece and piece.color == chess.WHITE:
                         selected = (row, col)
                         possible_moves = get_legal_moves_for_square(board, row, col)
@@ -175,20 +175,24 @@ def main():
                             board.push(move)
                             selected = None
                             possible_moves = []
-                        # If not a legal move, keep selection
+                        else:
+                            # If not a legal move, keep selection
+                            selected = (row, col)
+                            possible_moves = get_legal_moves_for_square(board, row, col)
                 else:
                     if piece and piece.color == chess.WHITE:
                         selected = (row, col)
                         possible_moves = get_legal_moves_for_square(board, row, col)
 
-        # AI move for EU (black)
+
         if not board.is_game_over() and board.turn == chess.BLACK:
             pygame.time.delay(500)
             ai_move(board)
 
     pygame.quit()
     sys.exit()
-# ...existing code...
+    
+    
 if __name__ == "__main__":
     main()
     
