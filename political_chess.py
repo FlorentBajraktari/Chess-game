@@ -1,10 +1,8 @@
 import pygame
 import sys
 import os
-import political_chess
-import chess
+import chess 
 import random
-
 
 # Inicializimi i Pygame
 pygame.init()
@@ -40,7 +38,6 @@ def load_images_from_sprite():
 
 IMAGES = load_images_from_sprite()
 
-# Map python-chess piece symbol to sprite key
 def piece_symbol_to_key(piece):
     if piece is None:
         return None
@@ -52,9 +49,7 @@ def piece_symbol_to_key(piece):
     kind = symbol.upper()
     return f"{color}{kind}"
 
-# Map python-chess piece to political name
 def piece_to_political_name(piece, square):
-    # White
     if piece is None:
         return None
     if piece.symbol() == 'K':
@@ -62,24 +57,23 @@ def piece_to_political_name(piece, square):
     if piece.symbol() == 'Q':
         return "Yellen"
     if piece.symbol() == 'R':
-        return "Elon Musk" if political_chess.square_file(square) == 0 else "Kamala"
+        return "Elon Musk" if chess.square_file(square) == 0 else "Kamala"
     if piece.symbol() == 'B':
-        return "FED" if political_chess.square_file(square) == 2 else "Pentagon"
+        return "FED" if chess.square_file(square) == 2 else "Pentagon"
     if piece.symbol() == 'N':
-        return "CIA" if political_chess.square_file(square) == 1 else "Tesla"
+        return "CIA" if chess.square_file(square) == 1 else "Tesla"
     if piece.symbol() == 'P':
         return "Pawn"
-    # Black
     if piece.symbol() == 'k':
         return "Ursula"
     if piece.symbol() == 'q':
         return "Lagarde"
     if piece.symbol() == 'r':
-        return "Macron" if political_chess.square_file(square) == 0 else "Scholz"
+        return "Macron" if chess.square_file(square) == 0 else "Scholz"
     if piece.symbol() == 'b':
-        return "Commission" if political_chess.square_file(square) == 2 else "Parliament"
+        return "Commission" if chess.square_file(square) == 2 else "Parliament"
     if piece.symbol() == 'n':
-        return "NATO" if political_chess.square_file(square) == 1 else "Polonia"
+        return "NATO" if chess.square_file(square) == 1 else "Polonia"
     if piece.symbol() == 'p':
         return "Pawn"
     return "?"
@@ -91,7 +85,7 @@ def draw_board(win, board, selected_square=None, possible_moves=[]):
             color = WHITE if (row + col) % 2 == 0 else BROWN
             rect = pygame.Rect(col * SQUARE_SIZE, row * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
             pygame.draw.rect(win, color, rect)
-            square = political_chess.square(col, 7-row)
+            square = chess.square(col, 7-row)
             if selected_square == (row, col):
                 pygame.draw.rect(win, SELECTED, rect, 4)
             elif (row, col) in possible_moves:
@@ -107,15 +101,15 @@ def draw_board(win, board, selected_square=None, possible_moves=[]):
                     win.blit(text, text_rect)
     pygame.display.update()
 
+def get_legal_moves_for_square(board, row, col):
+    square = chess.square(col, 7-row)
+    return [move for move in board.legal_moves if move.from_square == square]
+
 def get_square_under_mouse(pos):
     x, y = pos
     col = x // SQUARE_SIZE
     row = y // SQUARE_SIZE
     return row, col
-
-def get_legal_moves_for_square(board, row, col):
-    square = political_chess.square(col, 7-row)
-    return [move for move in board.legal_moves if move.from_square == square]
 
 def ai_move(board):
     moves = list(board.legal_moves)
@@ -126,7 +120,7 @@ def ai_move(board):
 def show_end_screen(win, board):
     win.fill(WHITE)
     if board.is_checkmate():
-        if board.turn == political_chess.WHITE:
+        if board.turn == chess.WHITE:
             msg = "EU Wins! (Checkmate)"
         else:
             msg = "USA Wins! (Checkmate)"
@@ -142,8 +136,10 @@ def show_end_screen(win, board):
     pygame.display.update()
     pygame.time.wait(4000)
 
+# ...existing code...
+
 def main():
-    board = political_chess.Board()
+    board = chess.Board()
     run = True
     selected = None
     possible_moves = []
@@ -159,37 +155,40 @@ def main():
             if event.type == pygame.QUIT:
                 run = False
 
-            if not board.is_game_over() and board.turn == political_chess.WHITE and event.type == pygame.MOUSEBUTTONDOWN:
+            if not board.is_game_over() and board.turn == chess.WHITE and event.type == pygame.MOUSEBUTTONDOWN:
                 row, col = get_square_under_mouse(pygame.mouse.get_pos())
-                square = political_chess.square(col, 7-row)
+                square = chess.square(col, 7-row)
                 piece = board.piece_at(square)
 
                 if selected:
-                    # Try to make move
-                    move = None
-                    for m in possible_moves:
-                        if m.to_square == square:
-                            move = m
-                            break
-                    if move:
-                        board.push(move)
-                        selected = None
-                        possible_moves = []
+                    # If clicked on another of your own pieces, change selection
+                    if piece and piece.color == chess.WHITE:
+                        selected = (row, col)
+                        possible_moves = get_legal_moves_for_square(board, row, col)
                     else:
-                        selected = None
-                        possible_moves = []
+                        move = None
+                        for m in possible_moves:
+                            if m.to_square == square:
+                                move = m
+                                break
+                        if move:
+                            board.push(move)
+                            selected = None
+                            possible_moves = []
+                        # If not a legal move, keep selection
                 else:
-                    if piece and piece.color == political_chess.WHITE:
+                    if piece and piece.color == chess.WHITE:
                         selected = (row, col)
                         possible_moves = get_legal_moves_for_square(board, row, col)
 
         # AI move for EU (black)
-        if not board.is_game_over() and board.turn == political_chess.BLACK:
+        if not board.is_game_over() and board.turn == chess.BLACK:
             pygame.time.delay(500)
             ai_move(board)
 
     pygame.quit()
     sys.exit()
-
+# ...existing code...
 if __name__ == "__main__":
     main()
+    
